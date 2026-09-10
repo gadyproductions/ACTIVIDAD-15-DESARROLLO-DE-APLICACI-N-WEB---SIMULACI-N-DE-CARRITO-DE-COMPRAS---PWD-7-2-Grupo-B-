@@ -1,0 +1,1754 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Actividad 15 - Carrito de Compras & Módulo SIMC | PWD 2026</title>
+  <meta name="description" content="Actividad 15: Simulación de Carrito de Compras y Manejo de Estado Reactivo en Vanilla JS. Articulado con Proyecto Integrador Grupo 4 (SIMC) - Gadiel Siles.">
+  
+  <!-- Fuentes Modernas: Google Fonts Outfit e Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: rgba(22, 30, 49, 0.75);
+      --bg-card-hover: rgba(30, 41, 67, 0.85);
+      --bg-glass: rgba(15, 23, 42, 0.65);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(56, 189, 248, 0.3);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-dark: #0284c7;
+      --primary-glow: rgba(56, 189, 248, 0.25);
+      --secondary: #818cf8;
+      --accent-green: #10b981;
+      --accent-green-glow: rgba(16, 185, 129, 0.25);
+      --accent-danger: #ef4444;
+      --accent-danger-glow: rgba(239, 68, 68, 0.25);
+      --accent-amber: #f59e0b;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 15px var(--primary-glow);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(129, 140, 248, 0.07) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 60%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      width: 100%;
+      flex: 1;
+    }
+
+    /* Membrete Académico / Header */
+    header.header {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px 30px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header.header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent-green));
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-logo {
+      width: 54px;
+      height: 54px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 0 15px var(--primary-glow);
+      flex-shrink: 0;
+    }
+
+    .brand-titles h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-titles p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    .academic-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .tag-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+
+    .tag-badge.student {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: var(--primary);
+    }
+
+    .tag-badge.group {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: var(--accent-green);
+    }
+
+    .tag-badge.school {
+      background: rgba(129, 140, 248, 0.12);
+      border-color: rgba(129, 140, 248, 0.3);
+      color: var(--secondary);
+    }
+
+    /* Pestañas de Navegación */
+    .tabs-nav {
+      display: flex;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 6px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      margin-bottom: 24px;
+      width: fit-content;
+    }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #090d16;
+      box-shadow: 0 0 16px var(--primary-glow);
+    }
+
+    .tab-btn.active.simc-tab {
+      background: var(--accent-green);
+      box-shadow: 0 0 16px var(--accent-green-glow);
+    }
+
+    /* Panel Informativo de Fundamentos Técnicos */
+    .tech-concepts-bar {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      font-size: 0.85rem;
+    }
+
+    .concept-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .concept-icon {
+      font-size: 1.25rem;
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .concept-item strong {
+      display: block;
+      color: #fff;
+      font-size: 0.88rem;
+      margin-bottom: 2px;
+    }
+
+    .concept-item p {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    /* Contenido de Vistas */
+    .view-container {
+      display: none;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .view-container.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Layout Principal (Grid exigido en el PDF) */
+    .grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Filtros y Controles del Catálogo */
+    .catalog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .catalog-header h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.35rem;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .chip-btn {
+      padding: 5px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: 9999px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .chip-btn:hover, .chip-btn.active {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Grid de Tarjetas del Catálogo */
+    #catalogo {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      padding: 20px;
+      border-radius: var(--radius-md);
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-glow);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px -5px rgba(0,0,0,0.3);
+    }
+
+    .card-category-tag {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+    }
+
+    .card-icon {
+      font-size: 2rem;
+      margin-bottom: 12px;
+      background: rgba(56, 189, 248, 0.1);
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    .card h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+
+    .card-description {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      flex: 1;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .price-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent-green);
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
+    }
+
+    .price-tag small {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Botones según requerimientos del PDF */
+    .btn {
+      background: var(--primary);
+      color: #090d16;
+      border: none;
+      padding: 9px 16px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.88rem;
+      font-family: 'Outfit', sans-serif;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .btn:hover {
+      background: #0ea5e9;
+      color: #fff;
+      box-shadow: 0 0 12px var(--primary-glow);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-danger {
+      background: var(--accent-danger);
+      color: #fff;
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+      box-shadow: 0 0 14px var(--accent-danger-glow);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-success {
+      background: var(--accent-green);
+      color: #090d16;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+      color: #fff;
+      box-shadow: 0 0 14px var(--accent-green-glow);
+    }
+
+    /* Badge según requerimientos del PDF */
+    .badge {
+      background: var(--accent-danger);
+      color: white;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      box-shadow: 0 0 8px var(--accent-danger-glow);
+      transition: var(--transition);
+    }
+
+    /* Columna de Resumen (Carrito de Compras) */
+    .cart-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      position: sticky;
+      top: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .cart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .cart-header h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.3rem;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Lista del Carrito (#lista-carrito exigido por el PDF) */
+    #lista-carrito {
+      list-style: none;
+      max-height: 380px;
+      overflow-y: auto;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 4px;
+    }
+
+    #lista-carrito::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    #lista-carrito::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+
+    #lista-carrito li {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.88rem;
+      transition: var(--transition);
+      animation: slideIn 0.2s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    #lista-carrito li:hover {
+      border-color: rgba(56, 189, 248, 0.3);
+      background: rgba(15, 23, 42, 0.85);
+    }
+
+    .item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .item-title {
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .item-price {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      color: var(--primary);
+    }
+
+    .btn-delete {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .btn-delete:hover {
+      background: var(--accent-danger);
+      color: #fff;
+      box-shadow: 0 0 8px var(--accent-danger-glow);
+    }
+
+    .empty-cart-state {
+      text-align: center;
+      padding: 30px 10px;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    .empty-cart-state svg {
+      width: 48px;
+      height: 48px;
+      stroke: var(--text-muted);
+      margin-bottom: 10px;
+      opacity: 0.6;
+    }
+
+    hr {
+      border: none;
+      height: 1px;
+      background: var(--border-color);
+      margin: 16px 0;
+    }
+
+    /* Sección de Totales (#total-compra exigido en el PDF) */
+    .total-box {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .total-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border-color);
+    }
+
+    .total-main h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+
+    .total-amount {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--accent-green);
+    }
+
+    .cart-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* MÓDULO SIMC: Historial de Sensores y Eventos */
+    .simc-panel {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .simc-header-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+
+    .simc-title h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.35rem;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .simc-title p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: 4px;
+    }
+
+    .simc-grid {
+      display: grid;
+      grid-template-columns: 1.8fr 1.2fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 960px) {
+      .simc-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .events-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .event-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      transition: var(--transition);
+    }
+
+    .event-card:hover {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(15, 23, 42, 0.9);
+      transform: translateX(4px);
+    }
+
+    .event-card.critico {
+      border-left: 4px solid var(--accent-danger);
+    }
+
+    .event-card.advertencia {
+      border-left: 4px solid var(--accent-amber);
+    }
+
+    .event-card.normal {
+      border-left: 4px solid var(--accent-green);
+    }
+
+    .event-meta {
+      flex: 1;
+    }
+
+    .event-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .event-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .event-badge.critico { background: rgba(239,68,68,0.2); color: #f87171; }
+    .event-badge.advertencia { background: rgba(245,158,11,0.2); color: #fbbf24; }
+    .event-badge.normal { background: rgba(16,185,129,0.2); color: #34d399; }
+
+    .event-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #fff;
+    }
+
+    .event-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .event-details {
+      display: flex;
+      gap: 12px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Modal de Reporte Agrupado */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 7, 15, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: var(--transition);
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-dialog {
+      background: #0f172a;
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius-lg);
+      max-width: 780px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 30px;
+      box-shadow: var(--shadow-lg);
+      transform: scale(0.95);
+      transition: var(--transition);
+    }
+
+    .modal-overlay.active .modal-dialog {
+      transform: scale(1);
+    }
+
+    .report-sheet {
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      color: #e2e8f0;
+      font-size: 0.9rem;
+    }
+
+    .report-header {
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 0.85rem;
+    }
+
+    .report-table th, .report-table td {
+      border: 1px solid var(--border-color);
+      padding: 10px 12px;
+      text-align: left;
+    }
+
+    .report-table th {
+      background: rgba(15, 23, 42, 0.8);
+      color: var(--primary);
+      font-family: 'Outfit', sans-serif;
+    }
+
+    /* Toasts de Notificación */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 9999;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 12px 18px;
+      color: #fff;
+      font-size: 0.85rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.7s forwards;
+    }
+
+    @keyframes toastIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes toastOut {
+      to { transform: translateY(20px); opacity: 0; }
+    }
+
+    footer.footer {
+      margin-top: 40px;
+      padding: 24px 0;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <!-- Membrete Institucional y de Alumno -->
+    <header class="header">
+      <div class="brand-section">
+        <div class="brand-logo" title="Sistema Inteligente de Monitoreo y Control">
+          🛒
+        </div>
+        <div class="brand-titles">
+          <h1>Módulo de Selección y Carrito Reactivo</h1>
+          <p>Actividad 15: e-Commerce & State Management in Vanilla JS</p>
+        </div>
+      </div>
+      
+      <div class="academic-meta">
+        <span class="tag-badge student">
+          👤 Alumno: <strong>Gadiel Siles</strong>
+        </span>
+        <span class="tag-badge group">
+          📡 <strong>Grupo 4 (SIMC)</strong>
+        </span>
+        <span class="tag-badge school">
+          🏫 <strong>EEST N.º 1 "Eduardo Ader"</strong>
+        </span>
+        <span class="tag-badge">
+          👨‍🏫 Prof. Mansilla Muñoz York Elías
+        </span>
+      </div>
+    </header>
+
+    <!-- Barra de Pestañas: Carrito de Compras vs Articulación SIMC -->
+    <nav class="tabs-nav" aria-label="Navegación de módulos">
+      <button class="tab-btn active" id="tab-carrito-btn" onclick="cambiarPestana('carrito')">
+        🛒 Catálogo & Carrito de Compras
+      </button>
+      <button class="tab-btn simc-tab" id="tab-simc-btn" onclick="cambiarPestana('simc')">
+        📡 Articulación Expo Técnica: Reportes SIMC
+      </button>
+      <button class="tab-btn" id="tab-teoria-btn" onclick="toggleModalTeoria()">
+        📖 Fundamentos Técnicos (JS)
+      </button>
+    </nav>
+
+    <!-- Barra Informativa de Conceptos Técnicos Clave -->
+    <div class="tech-concepts-bar">
+      <div class="concept-item">
+        <span class="concept-icon">📦</span>
+        <div>
+          <strong>El Estado (State)</strong>
+          <p>Variable en memoria (<code>carrito = []</code>) que refleja la selección actual del usuario.</p>
+        </div>
+      </div>
+      <div class="concept-item">
+        <span class="concept-icon">⚡</span>
+        <div>
+          <strong>Reactividad en Vanilla JS</strong>
+          <p>Cada mutación vuelve a renderizar la vista automáticamente sincronizando el DOM.</p>
+        </div>
+      </div>
+      <div class="concept-item">
+        <span class="concept-icon">💾</span>
+        <div>
+          <strong>Persistencia (localStorage)</strong>
+          <p>Datos guardados en clave <code>pwd_carrito</code>; no se pierden al presionar F5.</p>
+        </div>
+      </div>
+      <div class="concept-item">
+        <span class="concept-icon">🧮</span>
+        <div>
+          <strong>Cálculo con .reduce()</strong>
+          <p>Acumulación matemática funcional: <code>carrito.reduce((acc, p) =&gt; acc + p.precio, 0)</code></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VISTA 1: CARRITO DE COMPRAS Y CATÁLOGO     -->
+    <!-- (Cumplimiento estricto del PDF base)       -->
+    <!-- ========================================== -->
+    <div id="vista-carrito" class="view-container active">
+      <div class="grid">
+        <!-- Catálogo de Productos / Opciones -->
+        <div>
+          <div class="catalog-header">
+            <h2>📦 Catálogo Disponibles</h2>
+            <div class="filter-chips">
+              <button class="chip-btn active" onclick="filtrarCatalogo('todos', this)">Todos</button>
+              <button class="chip-btn" onclick="filtrarCatalogo('IoT', this)">Sensores IoT</button>
+              <button class="chip-btn" onclick="filtrarCatalogo('Seguridad', this)">Seguridad</button>
+              <button class="chip-btn" onclick="filtrarCatalogo('Software', this)">Software</button>
+              <button class="chip-btn" onclick="filtrarCatalogo('SIMC', this)">Módulos SIMC</button>
+            </div>
+          </div>
+          
+          <!-- Contenedor con id="catalogo" exacto según la consigna -->
+          <div id="catalogo"></div>
+        </div>
+
+        <!-- Resumen de Selección (Carrito) exacto según la consigna -->
+        <div>
+          <div class="cart-card">
+            <div class="cart-header">
+              <h2>Mi Selección <span id="contador-badge" class="badge">0</span></h2>
+              <small style="color: var(--text-muted); font-size: 0.75rem;">Persiste con localStorage</small>
+            </div>
+
+            <!-- Lista con id="lista-carrito" exacto según la consigna -->
+            <ul id="lista-carrito"></ul>
+
+            <hr>
+
+            <!-- Total con id="total-compra" exacto según la consigna -->
+            <div class="total-box">
+              <div class="total-row">
+                <span>Subtotal ítems:</span>
+                <span id="subtotal-items" style="font-family: 'JetBrains Mono'; color: #fff;">0</span>
+              </div>
+              <div class="total-row">
+                <span>Algoritmo de cálculo:</span>
+                <span style="font-family: 'JetBrains Mono'; font-size: 0.75rem; color: var(--primary);">Array.reduce()</span>
+              </div>
+              <div class="total-main">
+                <h3>Total:</h3>
+                <div class="total-amount">$<span id="total-compra">0.00</span></div>
+              </div>
+            </div>
+
+            <div class="cart-actions">
+              <!-- Botón con onclick="vaciarCarrito()" exacto según la consigna -->
+              <button class="btn btn-danger" onclick="vaciarCarrito()">
+                🗑️ Vaciar Lista
+              </button>
+              <button class="btn btn-secondary" onclick="exportarPresupuesto()" style="width: 100%; margin-top: 4px;">
+                📄 Generar Cotización (JSON)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- VISTA 2: ARTICULACIÓN EXPO TÉCNICA - GRUPO 4 (SIMC)      -->
+    <!-- (Cumplimiento de la Sección 4 del PDF: Reporte Agrupado) -->
+    <!-- ======================================================== -->
+    <div id="vista-simc" class="view-container">
+      <div class="simc-panel">
+        <div class="simc-header-banner">
+          <div class="simc-title">
+            <h2>📡 Centro de Telemetría & Historial de Sensores SIMC</h2>
+            <p>
+              Articulación oficial con la Expo Técnica (Pág. 5 del PDF): Acumulación en memoria local de sensores y eventos de telemetría para la generación de un <strong>Reporte Agrupado Oficial</strong>.
+            </p>
+          </div>
+          <div>
+            <span class="tag-badge group">
+              🛰️ SIMC Gateway: Activo (v2.4)
+            </span>
+          </div>
+        </div>
+
+        <div class="simc-grid">
+          <!-- Columna 1: Registro de Sensores y Eventos en Vivo -->
+          <div>
+            <h3 style="margin-bottom: 12px; font-size: 1.1rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+              ⚡ Sensores y Eventos del Sistema en Tiempo Real
+            </h3>
+            <div class="events-stream" id="simc-events-stream">
+              <!-- Renderizado dinámico de eventos SIMC -->
+            </div>
+          </div>
+
+          <!-- Columna 2: Historial Seleccionado para Reporte Agrupado -->
+          <div>
+            <div class="cart-card" style="top: 0;">
+              <div class="cart-header">
+                <h2>Historial SIMC <span id="simc-badge" class="badge">0</span></h2>
+              </div>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+                Seleccioná los eventos y sensores anómalos o de control para consolidarlos en el informe técnico de la Expo Técnica.
+              </p>
+
+              <ul id="lista-simc-reporte" style="list-style: none; display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; margin-bottom: 14px;">
+                <!-- Lista reactiva de eventos seleccionados -->
+              </ul>
+
+              <div class="total-box">
+                <div class="total-row">
+                  <span>Severidad Promedio:</span>
+                  <span id="simc-severidad-total" style="font-family: 'JetBrains Mono'; font-weight: bold; color: var(--primary);">0</span>
+                </div>
+                <div class="total-row">
+                  <span>Consumo Estimado Nodos:</span>
+                  <span id="simc-consumo-total" style="font-family: 'JetBrains Mono'; color: var(--accent-green);">0 mA</span>
+                </div>
+                <div class="total-row">
+                  <span>Cálculo con .reduce():</span>
+                  <span style="color: var(--text-muted); font-size: 0.72rem;">∑ (eventos.ponderación)</span>
+                </div>
+              </div>
+
+              <div class="cart-actions">
+                <button class="btn btn-success" onclick="abrirReporteAgrupado()" style="width: 100%;">
+                  📊 Generar Reporte Agrupado Oficial
+                </button>
+                <button class="btn btn-secondary" onclick="vaciarEventosSIMC()" style="width: 100%;">
+                  Limpiar Historial SIMC
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL: REPORTE AGRUPADO SIMC (Generación Oficial) -->
+  <div class="modal-overlay" id="modal-reporte">
+    <div class="modal-dialog">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="font-family: 'Outfit'; color: #fff; font-size: 1.3rem;">📋 Reporte Técnico Agrupado SIMC</h2>
+        <button onclick="cerrarReporteAgrupado()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+      </div>
+      
+      <div class="report-sheet" id="reporte-imprimible">
+        <div class="report-header">
+          <div>
+            <h3 style="color: var(--primary); font-size: 1.2rem; font-family: 'Outfit';">SISTEMA INTELIGENTE DE MONITOREO Y CONTROL (SIMC)</h3>
+            <p style="font-size: 0.8rem; color: #94a3b8;">E.E.S.T. N.º 1 "Eduardo Ader" - Vicente López | Proyecto Integrador Expo Técnica</p>
+          </div>
+          <div style="text-align: right; font-size: 0.8rem; color: #94a3b8;">
+            <p><strong>Responsable:</strong> Gadiel Siles</p>
+            <p><strong>Docente:</strong> Mansilla Muñoz York Elías</p>
+            <p><strong>Fecha:</strong> <span id="reporte-fecha"></span></p>
+          </div>
+        </div>
+
+        <p style="margin-bottom: 12px; font-size: 0.85rem;">
+          El presente informe consolida los sensores y eventos seleccionados en la memoria reactiva del sistema para su auditoría y mantenimiento preventivo.
+        </p>
+
+        <div id="reporte-contenido-tabla">
+          <!-- Inserción de tabla generada con reduce -->
+        </div>
+
+        <div style="margin-top: 16px; padding: 12px; background: rgba(15, 23, 42, 0.8); border-radius: 8px; font-size: 0.82rem;">
+          <strong>Resumen Analítico (calculado con Array.reduce):</strong>
+          <p id="reporte-resumen-metricas"></p>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-secondary" onclick="cerrarReporteAgrupado()">Cerrar</button>
+        <button class="btn btn-success" onclick="imprimirReporte()">🖨️ Imprimir / Guardar PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: FUNDAMENTOS TEÓRICOS DE JAVASCRIPT -->
+  <div class="modal-overlay" id="modal-teoria">
+    <div class="modal-dialog">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="font-family: 'Outfit'; color: #fff; font-size: 1.3rem;">📖 Fundamentos de la Actividad 15</h2>
+        <button onclick="toggleModalTeoria()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 16px; font-size: 0.9rem; color: #cbd5e1;">
+        <div style="background: rgba(15, 23, 42, 0.8); padding: 16px; border-radius: 8px; border-left: 4px solid var(--primary);">
+          <strong style="color: var(--primary); font-size: 1rem;">1. El Estado (State)</strong>
+          <p>Es una variable en la memoria volátil del navegador (arreglo u objeto) donde se almacenan los datos activos que determinan qué debe mostrarse en la pantalla.</p>
+        </div>
+        <div style="background: rgba(15, 23, 42, 0.8); padding: 16px; border-radius: 8px; border-left: 4px solid var(--secondary);">
+          <strong style="color: var(--secondary); font-size: 1rem;">2. Reactividad en Vanilla JS</strong>
+          <p>A diferencia de frameworks pesados, en Vanilla JS la reactividad se implementa disparando la función renderizadora (<code>renderizarCarrito()</code>) inmediatamente después de mutar el estado.</p>
+        </div>
+        <div style="background: rgba(15, 23, 42, 0.8); padding: 16px; border-radius: 8px; border-left: 4px solid var(--accent-green);">
+          <strong style="color: var(--accent-green); font-size: 1rem;">3. Persistencia con localStorage</strong>
+          <p>Almacena texto en el almacenamiento local del navegador (hasta 5MB). Usamos <code>JSON.stringify()</code> para guardar el arreglo y <code>JSON.parse()</code> para reconstruirlo al inicio.</p>
+        </div>
+        <div style="background: rgba(15, 23, 42, 0.8); padding: 16px; border-radius: 8px; border-left: 4px solid var(--accent-amber);">
+          <strong style="color: var(--accent-amber); font-size: 1rem;">4. El Método Array.prototype.reduce()</strong>
+          <p>Aplica una función acumuladora a cada elemento de la colección retornando un único valor final: <code>T = Σ(pi × qi)</code>. Evita bucles manuales imperativos.</p>
+        </div>
+      </div>
+      <div style="text-align: right; margin-top: 20px;">
+        <button class="btn btn-primary" onclick="toggleModalTeoria()">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor de Toasts de Notificación -->
+  <div id="toast-container"></div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>
+      Actividad 15: Simulación de Carrito de Compras / Selector Reactivo &bull; PWD 7° 2° Grupo B &bull; 
+      <strong>Gadiel Siles</strong> (Grupo 4 - SIMC) &bull; 
+      E.E.S.T. N.º 1 "Eduardo Ader" Vicente López (2026)
+    </p>
+  </footer>
+
+  <!-- ======================================================== -->
+  <!-- LÓGICA JAVASCRIPT (Cumpliendo estrictamente la consigna)  -->
+  <!-- ======================================================== -->
+  <script>
+    /* ========================================================
+       1. BASE DE DATOS SIMULADA (Requerida en la consigna)
+       ======================================================== */
+    const productos = [
+      // Ítems originales exactos de la consigna del docente:
+      { 
+        id: 1, 
+        nombre: "Sensor IoT de Flujo", 
+        precio: 4500, 
+        categoria: "IoT", 
+        icono: "🌊", 
+        descripcion: "Sensor de caudal de precisión con salida pulsos y protocolo digital para SIMC." 
+      },
+      { 
+        id: 2, 
+        nombre: "Módulo GPS Antirrobo", 
+        precio: 8200, 
+        categoria: "Seguridad", 
+        icono: "🛰️", 
+        descripcion: "Módulo de geolocalización satelital con soporte de corte remoto y geovallas." 
+      },
+      { 
+        id: 3, 
+        nombre: "Licencia Software Premium", 
+        precio: 12000, 
+        categoria: "Software", 
+        icono: "💻", 
+        descripcion: "Suscripción anual a plataforma analítica SIMC en la nube con telemetría 24/7." 
+      },
+      // Componentes adicionales específicos para el proyecto SIMC:
+      { 
+        id: 4, 
+        nombre: "Sensor MQ-135 Calidad de Aire", 
+        precio: 3800, 
+        categoria: "SIMC", 
+        icono: "💨", 
+        descripcion: "Detección de gases peligrosos, humo, amoníaco y CO2 para nodos de monitoreo." 
+      },
+      { 
+        id: 5, 
+        nombre: "Transceptor LoRaWAN SX1278", 
+        precio: 9500, 
+        categoria: "SIMC", 
+        icono: "📡", 
+        descripcion: "Comunicación de largo alcance y bajo consumo hasta 10km para telemetría remota." 
+      },
+      { 
+        id: 6, 
+        nombre: "Microcontrolador Gateway ESP32", 
+        precio: 7400, 
+        categoria: "SIMC", 
+        icono: "🧠", 
+        descripcion: "Nodo central de procesamiento dual-core con WiFi, BLE y gestión de actuadores." 
+      }
+    ];
+
+    /* ========================================================
+       2. ESTADO INICIAL (Recuperado de localStorage o vacío)
+       Exacto según el PDF
+       ======================================================== */
+    let carrito = JSON.parse(localStorage.getItem('pwd_carrito')) || [];
+
+    // Categoría de filtro activa
+    let filtroActivo = 'todos';
+
+    /* ========================================================
+       3. RENDERIZAR CATÁLOGO EN PANTALLA
+       (Usa el id="catalogo" y la estructura de cards)
+       ======================================================== */
+    function renderizarCatalogo() {
+      const contenedor = document.getElementById('catalogo');
+      if (!contenedor) return;
+
+      const productosFiltrados = filtroActivo === 'todos' 
+        ? productos 
+        : productos.filter(p => p.categoria === filtroActivo);
+
+      if (productosFiltrados.length === 0) {
+        contenedor.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
+            No se encontraron productos en esta categoría.
+          </div>
+        `;
+        return;
+      }
+
+      contenedor.innerHTML = productosFiltrados.map(p => `
+        <div class="card">
+          <span class="card-category-tag">${p.categoria || 'General'}</span>
+          <div class="card-icon">${p.icono || '📦'}</div>
+          <h3>${p.nombre}</h3>
+          <p class="card-description">${p.descripcion || 'Dispositivo de alta calidad para integración tecnológica.'}</p>
+          <div class="card-footer">
+            <div class="price-tag">
+              <small>$</small>${p.precio.toFixed(2)}
+            </div>
+            <button class="btn" onclick="agregarAlCarrito(${p.id})">
+              <span>+</span> Agregar
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    /* ========================================================
+       4. AGREGAR ÍTEM AL ESTADO
+       Exacto según el PDF
+       ======================================================== */
+    function agregarAlCarrito(id) {
+      const producto = productos.find(p => p.id === id);
+      if (!producto) return;
+
+      carrito.push(producto);
+      guardarYActualizar();
+      mostrarToast(`Agregado: ${producto.nombre}`);
+    }
+
+    /* ========================================================
+       5. GUARDAR EN LOCALSTORAGE Y RE-RENDERIZAR
+       Exacto según el PDF
+       ======================================================== */
+    function guardarYActualizar() {
+      localStorage.setItem('pwd_carrito', JSON.stringify(carrito));
+      renderizarCarrito();
+    }
+
+    /* ========================================================
+       6. RENDERIZAR LISTA SELECCIONADA Y CALCULAR TOTAL
+       (Usa los IDs 'lista-carrito', 'total-compra' y 'contador-badge'
+       y el cálculo matemático dinámico con .reduce())
+       ======================================================== */
+    function renderizarCarrito() {
+      const lista = document.getElementById('lista-carrito');
+      const totalEl = document.getElementById('total-compra');
+      const badge = document.getElementById('contador-badge');
+      const subtotalItems = document.getElementById('subtotal-items');
+
+      if (!lista || !totalEl || !badge) return;
+
+      // Si el carrito está vacío, mostramos un estado visual elegante
+      if (carrito.length === 0) {
+        lista.innerHTML = `
+          <div class="empty-cart-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="8" cy="21" r="1"></circle>
+              <circle cx="19" cy="21" r="1"></circle>
+              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+            </svg>
+            <p>Tu selección está vacía</p>
+            <p style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Seleccioná sensores o módulos del catálogo para comenzar.</p>
+          </div>
+        `;
+      } else {
+        // Renderizar cada ítem de la lista según el requerimiento del PDF
+        lista.innerHTML = carrito.map((p, idx) => `
+          <li>
+            <div class="item-info">
+              <span class="item-title">${p.nombre}</span>
+              <span class="item-price">$${p.precio.toFixed(2)}</span>
+            </div>
+            <button class="btn-delete" title="Quitar ítem" onclick="eliminarItem(${idx})">
+              ❌
+            </button>
+          </li>
+        `).join('');
+      }
+
+      // CÁLCULO DINÁMICO DEL TOTAL CON .reduce() (Directiva esencial de la materia)
+      const total = carrito.reduce((acc, p) => acc + p.precio, 0);
+      
+      totalEl.textContent = total.toFixed(2);
+      badge.textContent = carrito.length;
+      if (subtotalItems) subtotalItems.textContent = `${carrito.length} ${carrito.length === 1 ? 'ítem' : 'ítems'}`;
+    }
+
+    /* ========================================================
+       7. ELIMINAR UN ELEMENTO POR SU ÍNDICE
+       Exacto según el PDF
+       ======================================================== */
+    function eliminarItem(index) {
+      if (index >= 0 && index < carrito.length) {
+        const nombreEliminado = carrito[index].nombre;
+        carrito.splice(index, 1);
+        guardarYActualizar();
+        mostrarToast(`Eliminado: ${nombreEliminado}`);
+      }
+    }
+
+    /* ========================================================
+       8. VACIAR TODO EL CARRITO
+       Exacto según el PDF
+       ======================================================== */
+    function vaciarCarrito() {
+      if (carrito.length === 0) {
+        mostrarToast("El carrito ya está vacío");
+        return;
+      }
+
+      if (confirm("¿Estás seguro de que deseas vaciar toda la selección?")) {
+        carrito = [];
+        guardarYActualizar();
+        mostrarToast("Se vació la lista de selección");
+      }
+    }
+
+    /* ========================================================
+       FILTROS DE CATÁLOGO & UTILIDADES
+       ======================================================== */
+    function filtrarCatalogo(categoria, btnElement) {
+      filtroActivo = categoria;
+      
+      // Actualizar estilo visual de los chips
+      const chips = document.querySelectorAll('.chip-btn');
+      chips.forEach(c => c.classList.remove('active'));
+      if (btnElement) btnElement.classList.add('active');
+
+      renderizarCatalogo();
+    }
+
+    function exportarPresupuesto() {
+      if (carrito.length === 0) {
+        alert("Agregá elementos al carrito antes de generar la cotización.");
+        return;
+      }
+
+      const total = carrito.reduce((acc, p) => acc + p.precio, 0);
+      const dataCotizacion = {
+        institucion: "E.E.S.T. N.º 1 Eduardo Ader - Vicente López",
+        materia: "Proyecto de Implementación de Sitios Web Dinámicos (PWD 7° 2°)",
+        alumno: "Gadiel Siles",
+        grupo: "Grupo 4 (SIMC)",
+        fecha: new Date().toLocaleString(),
+        total: total,
+        cantidad_items: carrito.length,
+        items: carrito
+      };
+
+      const jsonStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataCotizacion, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", jsonStr);
+      downloadAnchor.setAttribute("download", `cotizacion_SIMC_Gadiel_Siles_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+
+      mostrarToast("Cotización exportada en formato JSON");
+    }
+
+    /* ========================================================
+       SECCIÓN 4 DEL PDF: ARTICULACIÓN CON EXPO TÉCNICA
+       GRUPO 4 (SIMC): Historial de Sensores y Eventos
+       para Generar Reporte Agrupado
+       ======================================================== */
+    const eventosSIMC_Disponibles = [
+      {
+        id: 101,
+        sensor: "Sensor de Flujo F-01",
+        evento: "Sobrepresión y Flujo Turbulento",
+        tipo: "critico",
+        severidad: 9,
+        consumo_mA: 120,
+        descripcion: "Caudal excede 45 L/min sostenido por más de 180s en tubería principal."
+      },
+      {
+        id: 102,
+        sensor: "Módulo GPS Antirrobo G-03",
+        evento: "Alerta de Desvío Geovalla",
+        tipo: "critico",
+        severidad: 8,
+        consumo_mA: 95,
+        descripcion: "Dispositivo salió del perímetro seguro asignado (Vicente López Sector B)."
+      },
+      {
+        id: 103,
+        sensor: "Sensor Calidad Aire MQ-135",
+        evento: "Concentración Elevada de Gases",
+        tipo: "advertencia",
+        severidad: 6,
+        consumo_mA: 150,
+        descripcion: "Índice de calidad de aire superó los 350 ppm en sala técnica."
+      },
+      {
+        id: 104,
+        sensor: "Nodo LoRaWAN Telemetría N-12",
+        evento: "Pérdida de Paquetes RF",
+        tipo: "advertencia",
+        severidad: 5,
+        consumo_mA: 45,
+        descripcion: "SNR por debajo de -12 dBm. Transmisiones reintentadas 3 veces."
+      },
+      {
+        id: 105,
+        sensor: "Gateway Central ESP32",
+        evento: "Heartbeat y Sincronización NTP",
+        tipo: "normal",
+        severidad: 1,
+        consumo_mA: 80,
+        descripcion: "Paquete de diagnóstico correcto. Memoria libre: 184 KB."
+      }
+    ];
+
+    // Estado reactivo específico de eventos SIMC (persistido)
+    let eventosSIMC_Seleccionados = JSON.parse(localStorage.getItem('simc_eventos_reporte')) || [];
+
+    function renderizarStreamEventosSIMC() {
+      const contenedor = document.getElementById('simc-events-stream');
+      if (!contenedor) return;
+
+      contenedor.innerHTML = eventosSIMC_Disponibles.map(ev => `
+        <div class="event-card ${ev.tipo}">
+          <div class="event-meta">
+            <div class="event-header">
+              <span class="event-badge ${ev.tipo}">${ev.tipo}</span>
+              <span class="event-title">${ev.sensor}</span>
+            </div>
+            <p class="event-desc"><strong>${ev.evento}:</strong> ${ev.descripcion}</p>
+            <div class="event-details">
+              <span>Severidad: ${ev.severidad}/10</span>
+              <span>Consumo: ${ev.consumo_mA} mA</span>
+            </div>
+          </div>
+          <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="agregarEventoSIMC(${ev.id})">
+            + Acumular
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function agregarEventoSIMC(id) {
+      const evento = eventosSIMC_Disponibles.find(e => e.id === id);
+      if (!evento) return;
+
+      eventosSIMC_Seleccionados.push(evento);
+      guardarEventosSIMC();
+      mostrarToast(`Evento acumulado: ${evento.sensor}`);
+    }
+
+    function guardarEventosSIMC() {
+      localStorage.setItem('simc_eventos_reporte', JSON.stringify(eventosSIMC_Seleccionados));
+      renderizarListaEventosSIMC();
+    }
+
+    function renderizarListaEventosSIMC() {
+      const lista = document.getElementById('lista-simc-reporte');
+      const badge = document.getElementById('simc-badge');
+      const severidadTotalEl = document.getElementById('simc-severidad-total');
+      const consumoTotalEl = document.getElementById('simc-consumo-total');
+
+      if (!lista) return;
+
+      badge.textContent = eventosSIMC_Seleccionados.length;
+
+      if (eventosSIMC_Seleccionados.length === 0) {
+        lista.innerHTML = `
+          <li style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.8rem;">
+            No hay eventos acumulados. Agregá eventos del panel izquierdo.
+          </li>
+        `;
+        severidadTotalEl.textContent = "0";
+        consumoTotalEl.textContent = "0 mA";
+        return;
+      }
+
+      lista.innerHTML = eventosSIMC_Seleccionados.map((ev, idx) => `
+        <li style="background: rgba(15,23,42,0.6); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
+          <div>
+            <strong style="color: #fff;">${ev.sensor}</strong>
+            <div style="color: var(--text-muted); font-size: 0.75rem;">${ev.evento}</div>
+          </div>
+          <button class="btn-delete" style="width: 22px; height: 22px; font-size: 0.7rem;" onclick="eliminarEventoSIMC(${idx})">❌</button>
+        </li>
+      `).join('');
+
+      // CÁLCULOS MATEMÁTICOS CON .reduce() para SIMC
+      const sumaSeveridad = eventosSIMC_Seleccionados.reduce((acc, ev) => acc + ev.severidad, 0);
+      const severidadPromedio = (sumaSeveridad / eventosSIMC_Seleccionados.length).toFixed(1);
+      const consumoTotal = eventosSIMC_Seleccionados.reduce((acc, ev) => acc + ev.consumo_mA, 0);
+
+      severidadTotalEl.textContent = `${severidadPromedio} / 10`;
+      consumoTotalEl.textContent = `${consumoTotal} mA`;
+    }
+
+    function eliminarEventoSIMC(index) {
+      if (index >= 0 && index < eventosSIMC_Seleccionados.length) {
+        eventosSIMC_Seleccionados.splice(index, 1);
+        guardarEventosSIMC();
+        mostrarToast("Evento removido del reporte");
+      }
+    }
+
+    function vaciarEventosSIMC() {
+      if (eventosSIMC_Seleccionados.length === 0) return;
+      if (confirm("¿Limpiar todos los eventos acumulados para el reporte SIMC?")) {
+        eventosSIMC_Seleccionados = [];
+        guardarEventosSIMC();
+        mostrarToast("Historial SIMC reiniciado");
+      }
+    }
+
+    function abrirReporteAgrupado() {
+      if (eventosSIMC_Seleccionados.length === 0) {
+        alert("Por favor acumule al menos un evento o sensor para generar el reporte agrupado.");
+        return;
+      }
+
+      document.getElementById('reporte-fecha').textContent = new Date().toLocaleString();
+
+      const tablaContenedor = document.getElementById('reporte-contenido-tabla');
+      tablaContenedor.innerHTML = `
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Sensor / Nodo</th>
+              <th>Evento / Diagnóstico</th>
+              <th>Tipo</th>
+              <th>Severidad</th>
+              <th>Consumo</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${eventosSIMC_Seleccionados.map((ev, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td><strong>${ev.sensor}</strong></td>
+                <td>${ev.evento}</td>
+                <td><span class="event-badge ${ev.tipo}">${ev.tipo}</span></td>
+                <td>${ev.severidad} / 10</td>
+                <td>${ev.consumo_mA} mA</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+
+      // Métricas con reduce
+      const totalConsumo = eventosSIMC_Seleccionados.reduce((acc, ev) => acc + ev.consumo_mA, 0);
+      const conteoCriticos = eventosSIMC_Seleccionados.reduce((acc, ev) => ev.tipo === 'critico' ? acc + 1 : acc, 0);
+      const conteoAdvertencias = eventosSIMC_Seleccionados.reduce((acc, ev) => ev.tipo === 'advertencia' ? acc + 1 : acc, 0);
+
+      document.getElementById('reporte-resumen-metricas').innerHTML = `
+        Total de eventos auditados: <strong>${eventosSIMC_Seleccionados.length}</strong> | 
+        Críticos: <strong style="color: #ef4444;">${conteoCriticos}</strong> | 
+        Advertencias: <strong style="color: #f59e0b;">${conteoAdvertencias}</strong> | 
+        Demanda Energética Acumulada: <strong style="color: #10b981;">${totalConsumo} mA</strong>.
+      `;
+
+      document.getElementById('modal-reporte').classList.add('active');
+    }
+
+    function cerrarReporteAgrupado() {
+      document.getElementById('modal-reporte').classList.remove('active');
+    }
+
+    function imprimirReporte() {
+      window.print();
+    }
+
+    /* ========================================================
+       CAMBIO DE PESTAÑAS Y MODALES
+       ======================================================== */
+    function cambiarPestana(pestana) {
+      const vistaCarrito = document.getElementById('vista-carrito');
+      const vistaSIMC = document.getElementById('vista-simc');
+      const btnCarrito = document.getElementById('tab-carrito-btn');
+      const btnSIMC = document.getElementById('tab-simc-btn');
+
+      if (pestana === 'carrito') {
+        vistaCarrito.classList.add('active');
+        vistaSIMC.classList.remove('active');
+        btnCarrito.classList.add('active');
+        btnSIMC.classList.remove('active');
+      } else if (pestana === 'simc') {
+        vistaCarrito.classList.remove('active');
+        vistaSIMC.classList.add('active');
+        btnCarrito.classList.remove('active');
+        btnSIMC.classList.add('active');
+      }
+    }
+
+    function toggleModalTeoria() {
+      const modal = document.getElementById('modal-teoria');
+      modal.classList.toggle('active');
+    }
+
+    /* Notificaciones Toast */
+    function mostrarToast(mensaje) {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `<span>⚡</span><span>${mensaje}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    /* ========================================================
+       INICIALIZACIÓN AL CARGAR LA PÁGINA
+       Exacto según el PDF
+       ======================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderizarCatalogo();
+      renderizarCarrito();
+      renderizarStreamEventosSIMC();
+      renderizarListaEventosSIMC();
+    });
+  </script>
+</body>
+</html>
